@@ -1,22 +1,19 @@
+import json
+import time
+from collections import OrderedDict
 from flask import Flask, request, Response, jsonify
 import requests
 from bs4 import BeautifulSoup
-import time
-from collections import OrderedDict
-import json
+import settings
 
 app = Flask(__name__)
 
 def scrape_imdb(movie_title):
-    search_url = f"https://www.imdb.com/find?q={movie_title.replace(' ', '+')}"
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:128.0) Gecko/20100101 Firefox/128.0'
-    }
-    retries = 3
+    search_url = f"{settings.BASE_URL}/find?q={movie_title.replace(' ', '+')}"
 
-    for i in range(retries):
+    for i in range(settings.MAX_RETRIES):
         try:
-            response = requests.get(search_url, headers=headers)
+            response = requests.get(search_url, headers=settings.REQUEST_HEADERS, timeout=settings.REQUEST_TIMEOUT)
             response.raise_for_status()
             soup = BeautifulSoup(response.text, 'html.parser')
 
@@ -25,7 +22,7 @@ def scrape_imdb(movie_title):
                 href = result['href']
                 imdb_id = href.split('/')[2]
 
-                first_result_url = f"https://www.imdb.com{href.split('?')[0]}"
+                first_result_url = f"{settings.BASE_URL}{href.split('?')[0]}"
                 first_result_title = result.text.strip()
 
                 # Extract the year
@@ -43,7 +40,7 @@ def scrape_imdb(movie_title):
 
                 # Additional data extraction from the movie's detailed page
                 try:
-                    detail_response = requests.get(first_result_url, headers=headers)
+                    detail_response = requests.get(first_result_url, headers=settings.REQUEST_HEADERS, timeout=settings.REQUEST_TIMEOUT)
                     detail_response.raise_for_status()
                     detail_soup = BeautifulSoup(detail_response.text, 'html.parser')
 
@@ -131,8 +128,7 @@ def scrape():
     if result:
         response = Response(json.dumps(result), mimetype='application/json')
         return response
-    else:
-        return jsonify({'error': 'No results found'}), 404
+    return jsonify({'error': 'No results found'}), 404
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=settings.DEBUG)

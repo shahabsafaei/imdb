@@ -1,0 +1,5 @@
+"""
+Production settings.
+"""
+
+DEBUG = False
