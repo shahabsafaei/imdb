@@ -41,21 +41,62 @@ def scrape_imdb(movie_title):
                 poster_img = soup.find('img', class_='ipc-image')
                 first_result_poster_url = poster_img['src'] if poster_img else None
 
-                result_data = OrderedDict([
-                    ('title', first_result_title),
-                    ('year', first_result_year),
-                    ('url', first_result_url),
-                    ('actors', actors),
-                    ('poster_url', first_result_poster_url),
-                    ('imdbID', imdb_id)
-                ])
+                # Additional data extraction from the movie's detailed page
+                try:
+                    detail_response = requests.get(first_result_url, headers=headers)
+                    detail_response.raise_for_status()
+                    detail_soup = BeautifulSoup(detail_response.text, 'html.parser')
 
-                return result_data
+                    # Extract plot summary
+                    plot_summary = detail_soup.find('span', {'data-testid': 'plot-xl'}).text.strip() if detail_soup.find('span', {'data-testid': 'plot-xl'}) else "N/A"
+
+                    # Extract awards
+                    award_info = detail_soup.find('li', {'data-testid': 'award_information'})
+                    if award_info:
+                        award_text = award_info.find('a', class_='ipc-metadata-list-item__label')
+                        awards_text = award_text.text.strip() if award_text else "None"
+
+                        awards_details = award_info.find('span', class_='ipc-metadata-list-item__list-content-item')
+                        awards_total = awards_details.text.strip() if awards_details else "None"
+                    else:
+                        awards_text = "None"
+                        awards_total = "None"
+
+                    # Extract directors
+                    directors_list = detail_soup.find('ul', class_='ipc-inline-list ipc-inline-list--show-dividers ipc-inline-list--inline ipc-metadata-list-item__list-content baseAlt')
+                    if directors_list:
+                        director_tags = directors_list.find_all('a', class_='ipc-metadata-list-item__list-content-item')
+                        directors = [tag.text.strip() for tag in director_tags]
+                    else:
+                        directors = []
+
+                    # Extract rating
+                    rating_div = detail_soup.find('div', {'data-testid': 'hero-rating-bar__aggregate-rating__score'})
+                    rating = rating_div.find('span', class_='sc-eb51e184-1 ljxVSS').text.strip() if rating_div else "N/A"
+
+                    result_data = OrderedDict([
+                        ('title', first_result_title),
+                        ('year', first_result_year),
+                        ('url', first_result_url),
+                        ('actors', actors),
+                        ('poster_url', first_result_poster_url),
+                        ('imdbID', imdb_id),
+                        ('plot_summary', plot_summary),
+                        ('awards', awards_text),
+                        ('awards_total', awards_total),
+                        ('directors', directors),
+                        ('rating', rating)
+                    ])
+
+                    return result_data
+                except requests.RequestException as e:
+                    print(f"Error fetching movie details: {e}")
+
             else:
                 return None
 
         except requests.RequestException as e:
-            print(f"Attempt {i + 1} - Error fetching data: {e}")
+            print(f"Attempt {i + 1} - Error fetching search results: {e}")
             time.sleep(2)
 
     return None
