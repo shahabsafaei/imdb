@@ -1,7 +1,9 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, Response, jsonify
 import requests
 from bs4 import BeautifulSoup
 import time
+from collections import OrderedDict
+import json
 
 app = Flask(__name__)
 
@@ -20,18 +22,35 @@ def scrape_imdb(movie_title):
 
             result = soup.find('a', class_='ipc-metadata-list-summary-item__t')
             if result:
-                first_result_url = f"https://www.imdb.com{result['href']}"
-                first_result_url = first_result_url.split('?')[0]
+                href = result['href']
+                imdb_id = href.split('/')[2]
+
+                first_result_url = f"https://www.imdb.com{href.split('?')[0]}"
                 first_result_title = result.text.strip()
 
-                year_span = result.find_next('span', class_='ipc-metadata-list-summary-item__li')
+                # Extract the year
+                year_ul = result.find_next('ul', class_='ipc-inline-list')
+                year_span = year_ul.find('span', class_='ipc-metadata-list-summary-item__li')
                 first_result_year = year_span.text.strip() if year_span else "N/A"
 
-                return {
-                    'title': first_result_title,
-                    'year': first_result_year,
-                    'url': first_result_url
-                }
+                # Extract the actors
+                actors_ul = year_ul.find_next('ul', class_='ipc-inline-list')
+                actors_span = actors_ul.find('span', class_='ipc-metadata-list-summary-item__li')
+                actors = actors_span.text.strip() if actors_span else "N/A"
+
+                poster_img = soup.find('img', class_='ipc-image')
+                first_result_poster_url = poster_img['src'] if poster_img else None
+
+                result_data = OrderedDict([
+                    ('title', first_result_title),
+                    ('year', first_result_year),
+                    ('url', first_result_url),
+                    ('actors', actors),
+                    ('poster_url', first_result_poster_url),
+                    ('imdbID', imdb_id)
+                ])
+
+                return result_data
             else:
                 return None
 
@@ -49,7 +68,8 @@ def scrape():
 
     result = scrape_imdb(movie_title)
     if result:
-        return jsonify(result)
+        response = Response(json.dumps(result), mimetype='application/json')
+        return response
     else:
         return jsonify({'error': 'No results found'}), 404
 
