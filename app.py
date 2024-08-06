@@ -74,6 +74,24 @@ def scrape_imdb(movie_title):
                     rating_div = detail_soup.find('div', {'data-testid': 'hero-rating-bar__aggregate-rating__score'})
                     rating = rating_div.find('span', class_='sc-eb51e184-1 ljxVSS').text.strip() if rating_div else "N/A"
 
+                    # Extract runtime and age restriction
+                    techspec_list = detail_soup.find('ul', class_='ipc-inline-list ipc-inline-list--show-dividers sc-d8941411-2 kRgWEf baseAlt')
+                    if techspec_list:
+                        list_items = techspec_list.find_all('li', role='presentation')
+                        
+                        # Determine if it is a TV Series
+                        is_tv_series = len(list_items) > 3 and 'TV Series' in list_items[0].text.strip()
+
+                        if is_tv_series:
+                            runtime = list_items[3].text.strip() if len(list_items) > 3 else "N/A"
+                            age_restriction = list_items[2].text.strip() if len(list_items) > 2 else "N/A"
+                        else:
+                            runtime = list_items[2].text.strip() if len(list_items) > 2 else "N/A"
+                            age_restriction = list_items[1].text.strip() if len(list_items) > 1 else "N/A"
+                    else:
+                        runtime = "N/A"
+                        age_restriction = "N/A"
+
                     result_data = OrderedDict([
                         ('title', first_result_title),
                         ('year', first_result_year),
@@ -85,7 +103,9 @@ def scrape_imdb(movie_title):
                         ('awards', awards_text),
                         ('awards_total', awards_total),
                         ('directors', directors),
-                        ('rating', rating)
+                        ('rating', rating),
+                        ('runtime', runtime),
+                        ('age_restriction', age_restriction)
                     ])
 
                     return result_data
