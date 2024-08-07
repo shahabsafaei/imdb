@@ -1,0 +1,5 @@
+"""
+Development settings.
+"""
+
+DEBUG = True
