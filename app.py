@@ -131,4 +131,7 @@ def scrape():
     return jsonify({'error': 'No results found'}), 404
 
 if __name__ == '__main__':
-    app.run(debug=settings.DEBUG)
+    app.run(
+        host='0.0.0.0',
+        debug=settings.DEBUG
+    )
