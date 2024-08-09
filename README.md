@@ -1,10 +1,48 @@
-## API Usage:
+# Installation Guide
+
+## Using Pipenv
+
+1. Install Pipenv (if not already installed):
+   ```
+   pip install pipenv
+   ```
+2. Install project dependencies:
+   ```
+   pipenv install
+   ```
+3. Create a `.env` file from the example:
+   ```
+   cp .env.example .env
+   ```
+4. Activate the Pipenv virtual environment:
+   ```
+   pipenv shell
+   ```
+5. Run the application:
+   ```
+   python app.py
+   ```
+
+## Using Docker Compose
+
+1. Build and start the Docker containers:
+   ```
+   docker compose -f docker-compose-dev.yaml up
+   ```
+2. The application will be accessible at `http://127.0.0.1:5000`.
+
+# Usage
+
+## API Usage
 
 Request:
+
 ```
 GET http://127.0.0.1:5000/scrape?title=godfather
 ```
+
 Response:
+
 ```
 {
     "title": "The Godfather",
@@ -24,17 +62,19 @@ Response:
     "age_restriction": "R"
 }
 ```
+
 ## Using params in Postman:
 
 Request:
 
-* Method: GET
-* URL: http://127.0.0.1:5000/scrape
-* Params:
-    * Key: title
-    * Value: godfather 
+- Method: GET
+- URL: http://127.0.0.1:5000/scrape
+- Params:
+  - Key: title
+  - Value: godfather
 
 Response:
+
 ```
 {
     "title": "The Godfather",
