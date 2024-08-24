@@ -1,7 +1,7 @@
 import json
 import time
 from collections import OrderedDict
-from flask import Flask, request, Response, jsonify
+from flask import Flask, request, Response, jsonify, render_template
 import requests
 from bs4 import BeautifulSoup
 import settings
@@ -117,6 +117,11 @@ def scrape_imdb(movie_title):
             time.sleep(2)
 
     return None
+
+
+@app.route('/')
+def index():
+    return render_template('index.html')
 
 @app.route('/scrape', methods=['GET'])
 def scrape():
