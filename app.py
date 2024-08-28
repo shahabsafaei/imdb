@@ -71,23 +71,30 @@ def scrape_imdb(movie_title):
                     rating_div = detail_soup.find('div', {'data-testid': 'hero-rating-bar__aggregate-rating__score'})
                     rating = rating_div.find('span', class_='sc-eb51e184-1 ljxVSS').text.strip() if rating_div else "N/A"
 
-                    # Extract runtime and age restriction
-                    techspec_list = detail_soup.find('ul', class_='ipc-inline-list ipc-inline-list--show-dividers sc-d8941411-2 kRgWEf baseAlt')
-                    if techspec_list:
-                        list_items = techspec_list.find_all('li', role='presentation')
-                        
-                        # Determine if it is a TV Series
-                        is_tv_series = len(list_items) > 3 and 'TV Series' in list_items[0].text.strip()
+                    techspec_list = detail_soup.find('ul', class_='ipc-inline-list ipc-inline-list--show-dividers sc-ec65ba05-2 joVhBE baseAlt')
 
-                        if is_tv_series:
+                    if techspec_list:
+                        # Check if it's a TV series
+                        list_items = techspec_list.find_all('li', class_='ipc-inline-list__item')
+                        if 'TV Series' in list_items[0].text.strip():
+                            # Extract the year (second <li>)
+                            first_result_year = list_items[1].find('a').text.strip() if len(list_items) > 1 else "N/A"
+
+                            # Extract the age restriction (third <li>)
+                            age_restriction = list_items[2].find('a').text.strip() if len(list_items) > 2 else "N/A"
+
+                            # Extract the runtime (fourth <li>)
                             runtime = list_items[3].text.strip() if len(list_items) > 3 else "N/A"
-                            age_restriction = list_items[2].text.strip() if len(list_items) > 2 else "N/A"
                         else:
+                            # For movies, keep the original approach
+                            age_restriction = list_items[1].find('a').text.strip() if len(list_items) > 1 else "N/A"
                             runtime = list_items[2].text.strip() if len(list_items) > 2 else "N/A"
-                            age_restriction = list_items[1].text.strip() if len(list_items) > 1 else "N/A"
+
+                        print("Age Restriction:", age_restriction)
+                        print("Runtime:", runtime)
                     else:
-                        runtime = "N/A"
                         age_restriction = "N/A"
+                        runtime = "N/A"
 
                     result_data = OrderedDict([
                         ('title', first_result_title),
